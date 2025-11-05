@@ -1,31 +1,53 @@
 pipeline {
     agent any
-    stages {
-        stage('Build Application') {
-            steps {
-                sh 'mvn -f java-tomcat-sample/pom.xml clean package'
-            }
-            post {
-                success {
-                    echo "Now Archiving the Artifacts...."
-                    archiveArtifacts artifacts: '**/*.war'
-                }
-            }
-        }
-        stage('Deploy in Staging Environment'){
-            steps{
-                build job: 'Deploy_Application_Staging_Env'
 
+    environment {
+        MAVEN_HOME = tool 'Maven3'   // Jenkins Maven installation name
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/youruser/java-tomcat-sample.git'
             }
-            
         }
-        stage('Deploy to Production'){
-            steps{
-                timeout(time:5, unit:'DAYS'){
-                    input message:'Approve PRODUCTION Deployment?'
-                }
-                build job: 'Deploy_Application_Prod_Env'
+
+        stage('Build') {
+            steps {
+                bat "${MAVEN_HOME}/bin/mvn clean package"
             }
+        }
+
+        stage('Upload to Nexus') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                    bat """
+                    ${MAVEN_HOME}/bin/mvn deploy -Dnexus.username=%NEXUS_USER% -Dnexus.password=%NEXUS_PASS%
+                    """
+                }
+            }
+        }
+
+        stage('Deploy to Tomcat') {
+            steps {
+                deploy adapters: [tomcat9(
+                    credentialsId: 'tomcat-creds', 
+                    path: '', 
+                    url: 'http://13.201.39.91:8081/manager/text'
+                )], 
+                contextPath: null, 
+                war: '**/target/*.war'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '✅ Deployment successful!'
+        }
+        failure {
+            echo '❌ Build failed!'
         }
     }
 }
