@@ -2,64 +2,38 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven3'
+        maven 'maven3'
     }
 
-    environment {
-        TOMCAT_HOST = '192.168.29.57'
-        TOMCAT_PORT = '8081'
-    }
-    stages{
-    stage('Pre-Build Info') {
+    stages {
+        stage('Pre-Build Info') {
             steps {
-                echo "Build started. Build number is: ${env.BUILD_NUMBER}"
-            }
-       }
-    }  
-        stage('Checkout Code') {
-            steps {
-                git branch: 'master', url: 'https://github.com/praveenkuluru/anshulc55_Jenkins_Upgradev3.git'
-            }
-        } 
-            
-        stage('Build Package') {
-            steps {
-                dir('java-tomcat-sample') {
-                    bat 'mvn clean package'
-                }
+                echo "Build number is: ${env.BUILD_NUMBER}"
             }
         }
 
-        stage('Deploy to Tomcat') {
+        stage('Checkout from Git') {
             steps {
-                dir('java-tomcat-sample') {
-                    // 👇 Securely use credentials here
-                    withCredentials([usernamePassword(credentialsId: 'd92e0a05-4f11-4172-b910-164fe6ed221d', usernameVariable: 'TOMCAT_USER', passwordVariable: 'TOMCAT_PASS')]) {
-                        // Remove old app (optional)
-                        bat '''
-                            curl -u %TOMCAT_USER%:%TOMCAT_PASS% ^
-                            "http://%TOMCAT_HOST%:%TOMCAT_PORT%/manager/text/undeploy?path=/sample"
-                        '''
+                git branch: 'main', url: 'https://github.com/praveenkuluru/anshulc55_Jenkins_Upgradev3.git'
+            }
+        }
 
-                        // Deploy new WAR
-                        bat '''
-                            curl -u %TOMCAT_USER%:%TOMCAT_PASS% ^
-                            --upload-file target/java-tomcat-maven-example.war ^
-                            "http://%TOMCAT_HOST%:%TOMCAT_PORT%/manager/text/deploy?path=/sample&update=true"
-                        '''
-                    }
-                }
+        stage('Build') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                echo 'Deploying to Tomcat...'
             }
         }
     }
 
     post {
-        success {
-            archiveArtifacts artifacts: 'java-tomcat-sample/target/*.war', fingerprint: true
-            echo '✅ Build and Deployment Successful!'
-        }
-        failure {
-            echo '❌ Build or Deployment Failed — Check Console Output'
+        always {
+            echo 'Pipeline completed.'
         }
     }
 }
