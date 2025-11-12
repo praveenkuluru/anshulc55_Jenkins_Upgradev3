@@ -9,14 +9,19 @@ pipeline {
         TOMCAT_HOST = '192.168.29.57'
         TOMCAT_PORT = '8081'
     }
-echo "Build number is: ${env.BUILD_NUMBER} "
-    stages {
+    stages{
+    stage('Pre-Build Info') {
+            steps {
+                echo "Build started. Build number is: ${env.BUILD_NUMBER}"
+            }
+       }
+    }  
         stage('Checkout Code') {
             steps {
                 git branch: 'master', url: 'https://github.com/praveenkuluru/anshulc55_Jenkins_Upgradev3.git'
             }
-        }
-
+        } 
+            
         stage('Build Package') {
             steps {
                 dir('java-tomcat-sample') {
