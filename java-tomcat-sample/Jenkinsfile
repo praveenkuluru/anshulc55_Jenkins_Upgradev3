@@ -9,7 +9,7 @@ pipeline {
         TOMCAT_HOST = '192.168.29.57'
         TOMCAT_PORT = '8081'
     }
-
+echo "build number is :"  ${env.BUILD_NUMBER}
     stages {
         stage('Checkout Code') {
             steps {
