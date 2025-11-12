@@ -29,7 +29,7 @@ pipeline {
             steps {
                 dir('java-tomcat-sample') {
                     // 👇 Securely use credentials here
-                    withCredentials([usernamePassword(credentialsId: 'tomcat_creds', usernameVariable: 'TOMCAT_USER', passwordVariable: 'TOMCAT_PASS')]) {
+                    withCredentials([usernamePassword(credentialsId: 'd92e0a05-4f11-4172-b910-164fe6ed221d', usernameVariable: 'TOMCAT_USER', passwordVariable: 'TOMCAT_PASS')]) {
                         // Remove old app (optional)
                         bat '''
                             curl -u %TOMCAT_USER%:%TOMCAT_PASS% ^
